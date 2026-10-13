@@ -1,11 +1,28 @@
+import 'dotenv/config';
 import express from 'express';
-const app = express();
-const port = 3000;
+import { connectDatabase } from './config/database.js';
 
-app.get('/', (req, res) => {
-  res.send('Hello, World!');
+const app = express();
+const PORT = Number(process.env.PORT) || 3000;
+
+app.use(express.json());
+
+app.get('/health', (_req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'WittyWidgetServer',
+  });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
+async function bootstrap(): Promise<void> {
+  await connectDatabase();
+
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+  });
+}
+
+bootstrap().catch((error: unknown) => {
+  console.error('Falha ao iniciar o servidor:', error);
+  process.exit(1);
 });
