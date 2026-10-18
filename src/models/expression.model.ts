@@ -109,7 +109,14 @@ const expressionSchema = new Schema(
 );
 
 // Otimiza as consultas por idioma e status da expressão.
-expressionSchema.index({ languageCode: 1, isActive: 1 });
+
+expressionSchema.index(
+  { languageCode: 1, phrase: 1 },
+  {
+    unique: true,
+    collation: { locale: 'en', strength: 2 },
+  },
+);
 
 export type ExpressionDocument = InferSchemaType<typeof expressionSchema>;
 

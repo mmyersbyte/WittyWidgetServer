@@ -86,6 +86,9 @@ const expressionSchema = new Schema({
     versionKey: false,
 });
 // Otimiza as consultas por idioma e status da expressão.
-expressionSchema.index({ languageCode: 1, isActive: 1 });
+expressionSchema.index({ languageCode: 1, phrase: 1 }, {
+    unique: true,
+    collation: { locale: 'en', strength: 2 },
+});
 export const Expression = model('Expression', expressionSchema);
 //# sourceMappingURL=expression.model.js.map

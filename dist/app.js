@@ -1,5 +1,6 @@
 import express from 'express';
 import { languageRoutes } from './routes/language.routes.js';
+import { expressionRoutes } from './routes/expression.routes.js';
 const app = express();
 app.use(express.json());
 app.get('/health', (_req, res) => {
@@ -10,6 +11,8 @@ app.get('/health', (_req, res) => {
 });
 // Rotas do módulo de idiomas.
 app.use('/api/v1/languages', languageRoutes);
+// Rotas do módulo de expressões.
+app.use('/api/v1/expressions', expressionRoutes);
 // Retorna 404 para endpoints inexistentes.
 app.use((_req, res) => {
     res.status(404).json({
