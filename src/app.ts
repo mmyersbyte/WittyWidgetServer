@@ -1,3 +1,6 @@
+import swaggerUi from 'swagger-ui-express';
+import { openApiSpec } from './docs/openapi.js';
+
 import express, {
   type Request,
   type Response,
@@ -6,6 +9,7 @@ import express, {
 
 import { languageRoutes } from './routes/language.routes.js';
 import { expressionRoutes } from './routes/expression.routes.js';
+
 const app = express();
 
 app.use(express.json());
@@ -22,6 +26,7 @@ app.use('/api/v1/languages', languageRoutes);
 
 // Rotas do módulo de expressões.
 app.use('/api/v1/expressions', expressionRoutes);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
 // Retorna 404 para endpoints inexistentes.
 app.use((_req, res) => {
