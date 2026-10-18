@@ -1,18 +1,8 @@
 import 'dotenv/config';
-import express from 'express';
 import { connectDatabase } from './config/database.js';
+import app from './app.js';
 
-const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-
-app.use(express.json());
-
-app.get('/health', (_req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    service: 'WittyWidgetServer',
-  });
-});
 
 async function bootstrap(): Promise<void> {
   await connectDatabase();
