@@ -1,8 +1,15 @@
 import { Router } from 'express';
 import { ExpressionController } from '../controllers/expression.controller.js';
+import { DailyPublicationController } from '../controllers/daily-publication.controller.js';
 
 const expressionRoutes = Router();
 const expressionController = new ExpressionController();
+
+const dailyPublicationController = new DailyPublicationController();
+
+expressionRoutes.get('/today', (req, res, next) =>
+  dailyPublicationController.today(req, res, next),
+);
 
 expressionRoutes.get('/', (req, res, next) =>
   expressionController.index(req, res, next),
