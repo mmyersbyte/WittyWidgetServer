@@ -1,6 +1,8 @@
 import express from 'express';
 import { languageRoutes } from './routes/language.routes.js';
 import { expressionRoutes } from './routes/expression.routes.js';
+import swaggerUi from 'swagger-ui-express';
+import { openApiSpec } from './docs/openapi.js';
 const app = express();
 app.use(express.json());
 app.get('/health', (_req, res) => {
@@ -19,6 +21,7 @@ app.use((_req, res) => {
         error: 'Route not found.',
     });
 });
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 // Trata erros inesperados em um único lugar.
 app.use((error, _req, res, next) => {
     if (res.headersSent) {
