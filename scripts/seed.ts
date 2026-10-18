@@ -2,8 +2,8 @@ import 'dotenv/config';
 import mongoose from 'mongoose';
 
 import { connectDatabase } from '../src/config/database.js';
-import { Language } from '../src/modules/languages/language.model.js';
-import { Expression } from '../src/modules/expressions/expression.model.js';
+import { Language } from '../src/models/language.model.js';
+import { Expression } from '../src/models/expression.model.js';
 
 async function seed(): Promise<void> {
   await connectDatabase();
