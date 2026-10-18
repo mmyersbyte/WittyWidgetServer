@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { MongoServerError } from 'mongodb';
-
+import { memoryCache } from '../utils/memory-cache.js';
 import { DailyPublication } from '../models/daily-publication.model.js';
 import { Expression } from '../models/expression.model.js';
 import { dailyPublicationQuerySchema } from '../validators/daily-publication.validator.js';
@@ -43,6 +43,19 @@ class DailyPublicationController {
 
     const { language, locale } = validation.data;
     const dateKey = getDateKey();
+
+    // A chave separa cada dia, idioma de aprendizagem e idioma de tradução.
+    const cacheKey = `daily-expression:${dateKey}:${language}:${locale.toLowerCase()}`;
+
+    // Permite que clientes HTTP compatíveis reutilizem respostas recentes.
+    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+
+    // Se a resposta já estiver em memória, não precisamos consultar o MongoDB.
+    const cachedResponse = memoryCache.get<unknown>(cacheKey);
+
+    if (cachedResponse !== undefined) {
+      return res.status(200).json(cachedResponse);
+    }
 
     try {
       // Se já existe uma publicação para hoje, reutilizamos a mesma.
@@ -127,8 +140,7 @@ class DailyPublicationController {
           error: `Translation not available for locale '${locale}'.`,
         });
       }
-
-      return res.status(200).json({
+      const responseBody = {
         date: dateKey,
         timeZone: TIME_ZONE,
         language,
@@ -145,7 +157,13 @@ class DailyPublicationController {
           category: expression.category,
           level: expression.level,
         },
-      });
+      };
+
+      // Como a data faz parte da chave, uma nova data usará outro cache.
+      // As entradas podem permanecer por até 24 horas.
+      memoryCache.set(cacheKey, responseBody, 24 * 60 * 60 * 1000);
+
+      return res.status(200).json(responseBody);
     } catch (error) {
       return next(error);
     }
