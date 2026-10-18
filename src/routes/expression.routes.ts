@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { ExpressionController } from '../controllers/expression.controller.js';
 import { DailyPublicationController } from '../controllers/daily-publication.controller.js';
 
+import { requireAdminKey } from '../middlewares/require-admin-key.js';
+
 const expressionRoutes = Router();
 const expressionController = new ExpressionController();
 
@@ -15,7 +17,7 @@ expressionRoutes.get('/', (req, res, next) =>
   expressionController.index(req, res, next),
 );
 
-expressionRoutes.post('/', (req, res, next) =>
+expressionRoutes.post('/', requireAdminKey, (req, res, next) =>
   expressionController.create(req, res, next),
 );
 
