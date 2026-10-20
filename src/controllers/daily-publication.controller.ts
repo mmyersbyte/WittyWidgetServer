@@ -65,7 +65,8 @@ class DailyPublicationController {
       }).lean();
 
       if (!publication) {
-        // No MVP, uma expressão precisa ter significado e exemplo em português.
+        // Uma expressão só entra no sorteio se tiver significado e exemplo
+        // traduzidos para o idioma padrão da publicação diária.
         const defaultLocaleRegex = new RegExp(`^${DEFAULT_LOCALE}$`, 'i');
 
         const candidates = await Expression.find({
@@ -89,9 +90,44 @@ class DailyPublicationController {
           });
         }
 
-        // Escolhe uma expressão aleatoriamente para a publicação do dia.
+        // Para um catálogo com N expressões elegíveis, consultamos até N - 1
+        // publicações anteriores dessas mesmas expressões. A expressão escolhida
+        // hoje fica fora do histórico porque dateKey precisa ser anterior a hoje.
+        // Assim, com um catálogo estável de 55 expressões, uma frase não se repete
+        // dentro de um ciclo de 55 dias. A consulta ignora expressões inativas ou
+        // inelegíveis, para que elas não reduzam artificialmente o catálogo.
+        const historyLimit = candidates.length - 1;
+        let recentlyPublishedIds = new Set<string>();
+
+        if (historyLimit > 0) {
+          const candidateIds = candidates.map((candidate) => candidate._id);
+
+          const recentPublications = await DailyPublication.find({
+            dateKey: { $lt: dateKey },
+            languageCode: language,
+            expressionId: { $in: candidateIds },
+          })
+            .sort({ dateKey: -1 })
+            .limit(historyLimit)
+            .select('expressionId')
+            .lean();
+
+          recentlyPublishedIds = new Set(
+            recentPublications.map((item) => item.expressionId.toString()),
+          );
+        }
+
+        // Embaralhamos apenas as que não aparecem nas N - 1 publicações
+        // anteriores. Como há N candidatas e no máximo N - 1 IDs distintos
+        // podem estar nesse histórico, sempre haverá pelo menos uma opção.
+        const availableCandidates = candidates.filter(
+          (candidate) => !recentlyPublishedIds.has(candidate._id.toString()),
+        );
+
         const selected =
-          candidates[Math.floor(Math.random() * candidates.length)];
+          availableCandidates[
+            Math.floor(Math.random() * availableCandidates.length)
+          ];
 
         try {
           await DailyPublication.create({
@@ -101,6 +137,8 @@ class DailyPublicationController {
           });
         } catch (error) {
           // Outra requisição pode ter criado a publicação ao mesmo tempo.
+          // O índice único dateKey + languageCode garante apenas uma publicação
+          // diária; abaixo, recuperamos a publicação vencedora.
           if (!(error instanceof MongoServerError) || error.code !== 11000) {
             return next(error);
           }
@@ -140,6 +178,7 @@ class DailyPublicationController {
           error: `Translation not available for locale '${locale}'.`,
         });
       }
+
       const responseBody = {
         date: dateKey,
         timeZone: TIME_ZONE,
@@ -159,7 +198,7 @@ class DailyPublicationController {
         },
       };
 
-      // Como a data faz parte da chave, uma nova data usará outro cache.
+      // Como a data faz parte da chave, um novo dia usa outro cache.
       // As entradas podem permanecer por até 24 horas.
       memoryCache.set(cacheKey, responseBody, 24 * 60 * 60 * 1000);
 

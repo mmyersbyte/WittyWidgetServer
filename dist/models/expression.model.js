@@ -45,6 +45,8 @@ const expressionSchema = new Schema({
         trim: true,
         ref: 'Language',
     },
+    // Transcrição fonética em IPA (International Phonetic Alphabet).
+    // Opcional para permitir que expressões sem pronúncia cadastrada continuem válidas.
     pronunciation: {
         type: String,
         trim: true,
@@ -85,7 +87,7 @@ const expressionSchema = new Schema({
     timestamps: true,
     versionKey: false,
 });
-// Otimiza as consultas por idioma e status da expressão.
+// Garante que a mesma frase não seja cadastrada duas vezes no mesmo idioma.
 expressionSchema.index({ languageCode: 1, phrase: 1 }, {
     unique: true,
     collation: { locale: 'en', strength: 2 },

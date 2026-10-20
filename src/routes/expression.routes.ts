@@ -21,4 +21,8 @@ expressionRoutes.post('/', requireAdminKey, (req, res, next) =>
   expressionController.create(req, res, next),
 );
 
+expressionRoutes.patch('/:id', requireAdminKey, (req, res, next) =>
+  expressionController.update(req, res, next),
+);
+
 export { expressionRoutes };

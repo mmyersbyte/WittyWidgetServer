@@ -16,11 +16,15 @@ const exampleSchema = z.object({
   translation: z.string().trim().min(1).max(300),
 });
 
+// O campo pronunciation armazena a transcrição fonética em IPA.
+// null é aceito para permitir remover uma pronúncia em uma atualização PATCH.
+const pronunciationSchema = z.string().trim().max(200).nullable().optional();
+
 // Define os campos aceitos para cadastrar uma expressão.
 export const createExpressionSchema = z.object({
   phrase: z.string().trim().min(1).max(150),
   languageCode: languageCodeSchema,
-  pronunciation: z.string().trim().max(200).optional(),
+  pronunciation: pronunciationSchema,
   meanings: z.array(meaningSchema).min(1),
   examples: z.array(exampleSchema).min(1),
   category: z
@@ -31,6 +35,15 @@ export const createExpressionSchema = z.object({
     .transform((value) => value.toLowerCase()),
   level: z.enum(['beginner', 'intermediate', 'advanced']),
 });
+
+// PATCH aceita somente os campos que precisam ser alterados.
+// Pelo menos um campo é obrigatório para evitar atualizações vazias.
+export const updateExpressionSchema = createExpressionSchema
+  .partial()
+  .strict()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided.',
+  });
 
 // Permite filtrar o catálogo sem exigir todos os parâmetros.
 export const listExpressionsQuerySchema = z.object({

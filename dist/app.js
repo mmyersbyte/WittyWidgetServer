@@ -1,8 +1,8 @@
+import swaggerUi from 'swagger-ui-express';
+import { openApiSpec } from './docs/openapi.js';
 import express from 'express';
 import { languageRoutes } from './routes/language.routes.js';
 import { expressionRoutes } from './routes/expression.routes.js';
-import swaggerUi from 'swagger-ui-express';
-import { openApiSpec } from './docs/openapi.js';
 const app = express();
 app.use(express.json());
 app.get('/health', (_req, res) => {
@@ -15,13 +15,13 @@ app.get('/health', (_req, res) => {
 app.use('/api/v1/languages', languageRoutes);
 // Rotas do módulo de expressões.
 app.use('/api/v1/expressions', expressionRoutes);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 // Retorna 404 para endpoints inexistentes.
 app.use((_req, res) => {
     res.status(404).json({
         error: 'Route not found.',
     });
 });
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 // Trata erros inesperados em um único lugar.
 app.use((error, _req, res, next) => {
     if (res.headersSent) {
